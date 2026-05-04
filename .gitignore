@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+env/
+
+# OS/editor
+.DS_Store
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Runtime scratch/export folders
+exports/
+runtime_exports/
+debug/
+
+# Temporary files/logs
+~$*.xlsx
+~$*.xlsm
+~$*.xls
+*.tmp
+*.bak
+*.log
+.Rhistory
+scratch/
+tmp/
+temp/
