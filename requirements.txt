@@ -1,8 +1,0 @@
-# Requires Python >=3.11,<3.12
-jupyter
-pandas
-numpy
-openpyxl
-matplotlib
-seaborn
-scikit-learn

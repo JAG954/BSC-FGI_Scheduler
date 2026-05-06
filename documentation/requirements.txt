@@ -1,0 +1,9 @@
+# Tested with Python 3.11.
+jupyter
+ipykernel
+pandas
+numpy
+openpyxl
+matplotlib
+seaborn
+scikit-learn

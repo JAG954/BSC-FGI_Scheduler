@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.cache/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -24,6 +26,7 @@ env/
 exports/
 runtime_exports/
 debug/
+# Reference outputs under output/ are intentionally trackable.
 
 # Temporary files/logs
 ~$*.xlsx

@@ -1,39 +1,35 @@
-# BSC-FGI Scheduler
+# BSC FGI Scheduling Model
 
-## Overview
+## Project Summary
 
-This repository contains a scheduling and trace-output workflow for modeling aircraft progression after Final Assembly rollout into BSC FGI / parking operations.
+This repository contains a Boeing 787 Final Assembly (FA) to Final Ground Integration (FGI) scheduling model built as a Purdue capstone handoff artifact. The model represents aircraft rollout from FA, FGI task completion, paint routing, compass calibration, movement constraints, exit staging, labor allocation, and schedule trace export generation.
 
-The scheduler tracks aircraft position, location occupancy, centerline constraints, paint bay assignments, compass calibration, labor-driven BTG completion, queue-based delivery readiness, and Excel-based schedule outputs. The goal is to create a readable planning model that shows how aircraft move through FGI, where capacity gets constrained, and how labor and location availability affect delivery timing.
+The included workbooks are sanitized or non-proprietary handoff data prepared for this project. The scheduler is a decision-support and analysis model, not a validated production scheduler.
 
-The main workflow is implemented in:
+## Current Status
 
-```text
-BSC_FGI_Scheduler.ipynb
-```
-
-The supporting move-time model is implemented in:
-
-```text
-move_time_estimation.ipynb
-```
-
----
+- The included baseline output workbook completes all 93 aircraft and leaves 0 active aircraft at termination.
+- The checked-in output is a reference baseline from a successful run, not a universal performance guarantee.
+- The model remains a work in progress and capstone handoff artifact. Additional validation against internal production data and operating rules would be needed before operational use.
 
 ## Repository Structure
 
 ```text
 BSC-FGI_Scheduler/
-|-- BSC_FGI_Scheduler.ipynb
-|-- data_import.ipynb
-|-- move_time_estimation.ipynb
+|-- README.md
+|-- requirements.txt
+|-- notebooks/
+|   |-- BSC_FGI_Scheduler.ipynb
+|   |-- data_import.ipynb
+|   |-- move_time_estimation.ipynb
+|   `-- analyze_scheduler_output.ipynb
 |-- data/
 |   |-- raw/
-|   |   |-- Centerlines and Move Times Purdue.xlsx
 |   |   |-- FA_Status_FGI_Handoff.xlsx
 |   |   |-- FGI_Locations_wPriority.xlsx
 |   |   |-- FGI_Staffing_By_Shift.xlsx
 |   |   |-- Nodes.xlsx
+|   |   |-- Centerlines and Move Times Purdue.xlsx
 |   |   `-- paint_schedules.xlsx
 |   `-- staged/
 |       |-- FGI_liveState.xlsx
@@ -41,309 +37,154 @@ BSC-FGI_Scheduler/
 |           |-- location_move_times.xlsx
 |           `-- move_time_estimation.xlsx
 |-- output/
+|   |-- scheduler_trace_output.xlsx
 |   |-- monthly_btg_control_charts.png
-|   `-- scheduler_trace_output.xlsx
-`-- README.md
+|   `-- nodemap.png
+`-- documentation/
+    |-- data_dictionary.md
+    `-- requirements.txt
 ```
 
----
+`data/raw/` contains source input files used by the import and move-time notebooks.
 
-## Data Folder Structure
+`data/staged/` contains files prepared for direct algorithm input. In the included baseline, `data/staged/FGI_liveState.xlsx` provides AP, location, and labor inputs, and `data/staged/move_times/move_time_estimation.xlsx` provides the calibrated movement-time matrix used by the scheduler.
 
-`data/raw/` contains original source workbooks maintained outside the scheduling algorithm. These files are the external source data used by the import and move-time workflows.
+`output/` is intentionally visible and trackable. It contains reference outputs from successful runs so reviewers can inspect the expected workbook structure and baseline trace outputs.
 
-`data/staged/` contains notebook-generated or notebook-assembled files that are directly consumed by later notebooks or by the scheduler itself. In this repo, "staged" means the file has already been cleaned, transformed, calibrated, or assembled into the format expected by the algorithm. These files are not final deliverables, but they are active inputs to the scheduling process.
+`documentation/` contains supporting handoff documentation, including the data dictionary.
 
-`output/` contains final exported scheduler results, reports, and visualizations.
+## Input Files
 
-The main data pipeline is:
+The current scheduler run uses the following files.
 
-```text
-data/raw/*.xlsx
-+ data/staged/move_times/move_time_estimation.xlsx
--> data_import.ipynb
--> data/staged/FGI_liveState.xlsx
--> BSC_FGI_Scheduler.ipynb
--> output/*.xlsx / *.png
-```
-
-Key staged files:
-
-| File | Purpose |
+| Path | Purpose |
 |---|---|
-| `data/staged/FGI_liveState.xlsx` | Main staged scheduler input assembled by `data_import.ipynb`. |
-| `data/staged/move_times/move_time_estimation.xlsx` | Active calibrated move-time matrix used by the scheduler. |
-| `data/staged/move_times/location_move_times.xlsx` | Uncalibrated/original model output from `move_time_estimation.ipynb`. |
-
----
-
-## Main Workflow
-
-1. `move_time_estimation.ipynb` reads node layout and historical move-time data from `data/raw/`.
-2. It writes the uncalibrated move-time matrix to `data/staged/move_times/location_move_times.xlsx`.
-3. It calibrates that matrix against historical move times and writes the active calibrated matrix to `data/staged/move_times/move_time_estimation.xlsx`.
-4. `data_import.ipynb` reads raw AP, location, node, paint, and staged move-time inputs.
-5. `data_import.ipynb` writes `data/staged/FGI_liveState.xlsx`.
-6. `BSC_FGI_Scheduler.ipynb` reads `data/staged/FGI_liveState.xlsx`.
-7. `BSC_FGI_Scheduler.ipynb` exports final results to `output/`.
-
-The internal sheets in `data/staged/FGI_liveState.xlsx` are:
-
-- `ap_data`
-- `location_data`
-- `labor_data`
-- `move_times`
-- `paint_schedule`
-
----
-
-## Important Data Files
-
-| File | Purpose | Used by |
-|---|---|---|
-| `data/raw/FA_Status_FGI_Handoff.xlsx` | Raw AP / FARO status, tank closure, and milestone input. | `data_import.ipynb`. |
-| `data/raw/FGI_Locations_wPriority.xlsx` | Location priority, online timing, owner, tooling, obstruction, and note reference. | `data_import.ipynb`. |
-| `data/raw/Nodes.xlsx` | Node and adjacency input for location movement modeling. | `move_time_estimation.ipynb`; also cleaned by `data_import.ipynb`. |
-| `data/raw/paint_schedules.xlsx` | Paint bay schedule for `BSC1` and `BSC2`. | `data_import.ipynb`. |
-| `data/raw/Centerlines and Move Times Purdue.xlsx` | Historical move-time and centerline reference data. | `move_time_estimation.ipynb`. |
-| `data/raw/FGI_Staffing_By_Shift.xlsx` | Staffing reference workbook. | Reference file; default import uses notebook staffing assumptions unless changed. |
-| `data/staged/move_times/move_time_estimation.xlsx` | Calibrated move-time matrix copied into the live-state workbook. | `data_import.ipynb`; then `BSC_FGI_Scheduler.ipynb`. |
-| `data/staged/FGI_liveState.xlsx` | Assembled scheduler input workbook. | `BSC_FGI_Scheduler.ipynb`. |
-
----
-
-## Move-Time Estimation Notebook
-
-`move_time_estimation.ipynb` supports the scheduler by building and calibrating the move-time matrix.
-
-It currently:
-
-- loads nodes and adjacency from `data/raw/Nodes.xlsx`
-- builds a movement graph
-- applies shortest-path logic to estimate route distance
-- converts distance to modeled move time using a 3 mph assumption
-- exports the uncalibrated matrix to `data/staged/move_times/location_move_times.xlsx`
-- loads historical moves from `data/raw/Centerlines and Move Times Purdue.xlsx`
-- removes historical centerline moves from the calibration set
-- fits a linear calibration model using `sklearn.linear_model.LinearRegression`
-- exports the calibrated scheduler matrix to `data/staged/move_times/move_time_estimation.xlsx`
-
-The scheduler uses the calibrated matrix after `data_import.ipynb` copies it into `data/staged/FGI_liveState.xlsx` as the `move_times` sheet.
-
----
-
-## Scheduler Notebook
-
-`BSC_FGI_Scheduler.ipynb` loads all active scheduler inputs from:
-
-```text
-data/staged/FGI_liveState.xlsx
-```
-
-The scheduler notebook follows this general sequence:
-
-1. Set local paths, run dates, forecast behavior, and export settings.
-2. Load AP, location, labor, move-time, and paint-schedule data from the staged live-state workbook.
-3. Initialize the core `AP`, `Location`, `FGI`, and `FGITrace` objects.
-4. Add locations, active aircraft, move-time dictionaries, queues, and trace tracking to the scheduler.
-5. Run a day-by-day simulation from `STARTDATE` to `ENDDATE`, with optional forecast continuation.
-6. Roll APs into FGI when their FA rollout date is reached.
-7. Apply shift-based labor capacity to structure, systems, declam, and test BTG.
-8. Schedule paint moves and compass moves.
-9. Process feasible moves during the move window.
-10. Check end-of-day delivery readiness.
-11. Record daily AP status and trace state.
-12. Export final scheduler workbooks and visualizations to `output/`.
-
----
-
-## Core Scheduler Objects
-
-### `AP`
-
-Represents one aircraft / line number. It stores rollout timing, BTG values, P3 milestones, shake and test status, current location, task state, move request state, destination, and task completion flags.
-
-### `Location`
-
-Represents a physical or temporary scheduler location. It stores priority, online status, owner and tooling fields, centerline dependencies, current AP occupancy, schedule history, temporary-location flag, and move times to other locations.
-
-### `FGI`
-
-Owns the active scheduler state: active APs, locations, move queue, paint queue, compass queue, labor queues, AP movement, centerline movement, paint scheduling, compass scheduling, labor assignment, delivery readiness, daily status rows, delivery rows, and KPI tables.
-
-### `FGITrace`
-
-Records daily location occupancy, labor allocation, successful moves, and BTG completion by team. At export time, these trace dictionaries are converted into dataframes and written to Excel.
-
----
-
-## Queue and Task Logic
-
-| Queue | Meaning |
-|---|---|
-| `move` | APs with an active move request. |
-| `FGI task:paint` | APs still waiting on paint workflow completion. |
-| `FGI task:compass` | APs still waiting on compass calibration completion. |
-| `labor:structure` | APs with remaining structure BTG. |
-| `labor:systems` | APs with remaining systems BTG. |
-| `labor:declam` | APs with remaining declam BTG. |
-| `labor:test` | APs with remaining test BTG. |
-
-When an AP enters FGI, it is added to paint and compass queues. It is also added to each labor queue where that AP has remaining FGI BTG.
-
-Labor capacity is applied by shift. The notebook converts available manhours into BTG completion using `FGI_CPJ`, then works APs in queue order. Once a team's BTG reaches zero for an AP, that AP is removed from that team's labor queue.
-
----
-
-## Movement Logic
-
-The scheduler uses the `move_times` sheet in `data/staged/FGI_liveState.xlsx`. Row labels and column labels are converted to strings, values are coerced to numeric, and the matrix is stored as a nested dictionary.
-
-A move destination is only feasible if:
-
-- the destination exists in `fgi.Locations`
-- the destination is online
-- the destination is empty
-- the origin-to-destination move time is finite
-- the destination is not a temporary staging location during normal move selection
-
-When an AP needs a move and does not have a fixed destination, `AP.get_move_candidates()` builds feasible destinations and sorts them by:
-
-1. lower location priority value
-2. lower move time
-
-Temporary `N##` locations are staging locations, not normal parking locations. They are only used when a centerline-constrained move requires another AP to be temporarily cleared out of the way.
-
----
-
-## Paint, Compass, and Delivery Logic
-
-Paint scheduling looks ahead to the next day's paint schedule. If an AP is scheduled for `BSC1` or `BSC2`, it receives a fixed destination move request for that bay. Paint is considered complete when an AP moves out of `BSC1` or `BSC2`.
-
-Compass calibration is centered on `CR3`. Compass is considered complete only after the AP has occupied `CR3` for at least one workday and `CR1` and `CR2` are unoccupied on that qualifying workday.
-
-Delivery readiness is based on queue absence. At the end of each simulated day, an AP can leave active FGI only if it has no move, paint, compass, or labor blockers and no assigned destination.
-
----
+| `data/staged/FGI_liveState.xlsx` | Staged AP, location, and labor input workbook used directly by `notebooks/BSC_FGI_Scheduler.ipynb`. |
+| `data/staged/move_times/move_time_estimation.xlsx` | Calibrated origin-destination move-time matrix used directly by the scheduler. |
+| `data/raw/paint_schedules.xlsx` | Paint schedule input. The scheduler reads the `Historical` sheet and uses `BSC1` / `BSC2` bay assignments. |
+| `data/raw/FA_Status_FGI_Handoff.xlsx` | Raw AP, FA rollout, BTG, tank closure, and P3 milestone source workbook used by `notebooks/data_import.ipynb`. |
+| `data/raw/FGI_Locations_wPriority.xlsx` | Raw FGI location priority, online date, owner, tooling, centerline, obstruction, and notes source workbook. |
+| `data/raw/Nodes.xlsx` | Node and adjacency source used for route and move-time estimation. |
+| `data/raw/Centerlines and Move Times Purdue.xlsx` | Historical move-time and centerline reference data used by the move-time estimation notebook. |
+| `data/raw/FGI_Staffing_By_Shift.xlsx` | Staffing reference workbook. Current scheduler staffing assumptions should be checked in the notebooks before use. |
 
 ## Output Files
 
-| Output | Description |
-|---|---|
-| `output/scheduler_trace_output.xlsx` | Main scheduler trace and KPI workbook. |
-| `output/monthly_btg_control_charts.png` | Monthly BTG control chart image from supporting analysis. |
+The main scheduler output is:
 
-Expected sheets in `output/scheduler_trace_output.xlsx` include:
+```text
+output/scheduler_trace_output.xlsx
+```
+
+The current output workbook contains these sheets:
 
 | Sheet | Contents |
 |---|---|
-| `ChickenTracks` | Daily location occupancy by location. |
-| `Labor Allocation` | LNs worked by team and date. |
-| `Moves Per Day` | Successful AP moves by date and LN. |
-| `Daily AP Status` | End-of-day AP state and remaining BTG. |
-| `Exit Summary` | Delivery timing, planned B1R comparison, and time in system. |
-| `Active AP Status` | Active APs remaining at termination and their queue blockers. |
-| `KPI Summary` | High-level schedule and labor KPIs. |
-| `Team KPIs` | Team-level BTG and workday KPIs. |
-| `BTG structure` | Daily structure BTG completion by LN. |
-| `BTG systems` | Daily systems BTG completion by LN. |
-| `BTG declam` | Daily declam BTG completion by LN. |
-| `BTG test` | Daily test BTG completion by LN. |
+| `ChickenTracks` | Daily location trace by date and location. |
+| `Labor Allocation` | Daily AP labor allocation by FGI team. |
+| `Moves Per Day` | Successful move trace by date and line number. |
+| `Daily AP Status` | End-of-day AP location, remaining FGI BTG, and move request status. |
+| `Exit Summary` | FA rollout, planned B1R, actual exit, days in system, lateness, and final location. |
+| `Active AP Status` | APs still active at termination and their queue or task blockers. |
+| `KPI Summary` | Run-level delivery, active AP, time-in-system, move, and labor KPIs. |
+| `Team KPIs` | Team-level AP count, BTG completion, and workday KPIs. |
+| `BTG structure` | Daily structure BTG completion by line number. |
+| `BTG systems` | Daily systems BTG completion by line number. |
+| `BTG declam` | Daily declam BTG completion by line number. |
+| `BTG test` | Daily test BTG completion by line number. |
 
----
+Additional reference outputs include:
 
-## How to Run
+| Path | Purpose |
+|---|---|
+| `output/monthly_btg_control_charts.png` | Generated BTG control chart image from the analysis notebook. |
+| `output/nodemap.png` | Generated node map image from the move-time notebook. |
 
-1. Clone the repository.
+## How To Run
+
+1. Clone the repository and enter it.
 
    ```bash
    git clone <repo-url>
    cd BSC-FGI_Scheduler
    ```
 
-2. Install required Python / Jupyter packages.
+2. Create and activate a local Python environment.
 
    ```bash
-   pip install jupyter pandas numpy openpyxl matplotlib seaborn scikit-learn
+   python3.11 -m venv .venv
+   source .venv/bin/activate
    ```
 
-   `scikit-learn` is only needed for `move_time_estimation.ipynb`.
+3. Install notebook dependencies.
 
-3. Confirm the staged scheduler input exists:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Start Jupyter and open the scheduler notebook.
+
+   ```bash
+   cd notebooks
+   jupyter notebook BSC_FGI_Scheduler.ipynb
+   ```
+
+5. Run the scheduler notebook cells in order.
+
+6. Confirm the main output workbook was generated or updated. From the notebook working directory this is:
 
    ```text
-   data/staged/FGI_liveState.xlsx
+   ../output/scheduler_trace_output.xlsx
    ```
 
-4. If raw workbooks or import assumptions changed, run:
-
-   ```text
-   data_import.ipynb
-   ```
-
-5. Run:
-
-   ```text
-   BSC_FGI_Scheduler.ipynb
-   ```
-
-6. Review the final outputs:
+   From the repository root this is:
 
    ```text
    output/scheduler_trace_output.xlsx
-   output/monthly_btg_control_charts.png
    ```
 
-7. If the move-time matrix needs to be rebuilt or recalibrated, run:
+The current scheduler notebook uses notebook-relative path assumptions and is normally run from the `notebooks/` directory. If paths fail, check the path setup cells before changing input files.
 
-   ```text
-   move_time_estimation.ipynb
-   ```
+If raw inputs or import assumptions change, rerun `notebooks/data_import.ipynb` from the repository root to rebuild `data/staged/FGI_liveState.xlsx`, then rerun the scheduler notebook. If the move-time matrix needs to be rebuilt, review and rerun `notebooks/move_time_estimation.ipynb`, then rerun the scheduler.
 
-   Then rerun `data_import.ipynb` so the updated calibrated matrix is copied into `data/staged/FGI_liveState.xlsx`, and rerun the scheduler notebook.
+## Requirements / Environment
 
----
+The current notebooks were inspected against Python 3.11. Required packages are listed in `requirements.txt`.
 
-## Current Assumptions
+Core dependencies:
 
-- The full scheduler notebook loads staged scheduler input from `data/staged/FGI_liveState.xlsx`.
-- Locations are only usable when their online-date logic marks them online.
-- Lower location priority values are preferred before shorter move times.
-- The move-time matrix must include finite move times for usable origin-destination pairs.
-- Temporary `N##` locations are used only for centerline staging.
-- Paint bay scheduling is controlled by the `BSC1` and `BSC2` paint schedule.
-- Compass calibration uses `CR3`, with `CR1` and `CR2` clear as part of the completion condition.
-- Labor teams reduce FGI BTG using shift staffing and CPJ assumptions.
-- Delivery readiness is based on queue/task state being clear.
-- Weekend days skip normal labor and movement processing in the current loop.
-- Input naming consistency matters. Location names, line numbers, and matrix labels must match across files.
+- `pandas`, `numpy`, and `openpyxl` for workbook input/output and data transformations
+- `matplotlib` for generated charts and node maps
+- `seaborn` because it is imported by the scheduler notebook
+- `scikit-learn` for move-time calibration in `notebooks/move_time_estimation.ipynb`
+- `jupyter` and `ipykernel` for notebook execution
 
----
+## Model Assumptions
 
-## Known Limitations / Work in Progress
+- APs enter the model at their FA rollout date.
+- FGI work is represented through converted BTG labor buckets by team.
+- Paint routing follows the input paint schedule, currently using `BSC1` and `BSC2`.
+- Compass calibration uses `CR3`; `CR1` and `CR2` must be clear for the completion condition.
+- DC / A-stall style locations represent exit staging in the model.
+- Movement feasibility depends on location availability, online status, move-time availability, and centerline constraints.
+- Outputs are simulation and decision-support traces. They should be reviewed before being used for planning decisions.
+- Internal Boeing validation would be needed before operational use.
 
-- The repository is still being refined before final handoff.
-- The current full notebook is the reliable run reference. A clean public notebook is planned but should be added after the current workflow is finalized.
-- Forecast mode stops when all APs are delivered or when the forecast cap is reached.
-- If the move queue blocks because there is no feasible destination, no finite move time, or no temporary staging location, the AP remains active and should be reviewed in `Active AP Status`.
-- `data/raw/FGI_Staffing_By_Shift.xlsx` is present as a staffing reference file; the default import notebook currently uses notebook staffing assumptions unless explicitly changed.
-- The move-time matrix needs to be regenerated or edited when locations, nodes, historical calibration data, or movement assumptions change.
-- Centerline blocker staging moves are part of the move transaction but are not recorded as normal final moves.
-- Data quality matters. Missing dates, mismatched LNs, or location names that do not match the move-time matrix can change the scheduler output.
+## Known Limitations
 
----
+- Sanitized handoff data may not match the live production state.
+- Movement times and location constraints depend on the included input assumptions and calibration data.
+- Task logic is simplified relative to real production execution.
+- Shake and tank-closure details are represented only to the extent reflected in the current staged inputs and notebook logic.
+- The current model supports analysis and handoff review. It is not an autonomous production scheduling system.
+- The notebooks are path-sensitive in places; review path setup cells when running from a new Jupyter environment.
 
-## Development Notes
+## License / Ownership Note
 
-`BSC_FGI_Scheduler.ipynb` is the full development notebook. It includes the run conditions, scheduler workflow, object definitions, export logic, and supporting analysis cells.
+No license file is currently included. Usage rights should be confirmed with the project authors / Purdue capstone team before reuse.
 
-`move_time_estimation.ipynb` is a supporting notebook. It is only needed when the move-time matrix needs to be rebuilt or recalibrated.
+This repository should not be read as a Boeing-owned or Boeing-licensed software release.
 
-The main expected scheduler artifact is:
+## Handoff Note
 
-```text
-output/scheduler_trace_output.xlsx
-```
-
-Debug exports, old workbooks, and diagnostic files should not be required for normal scheduler use.
-
+Before relying on results, users should review input assumptions, inspect the staged inputs, rerun the notebooks locally, and compare the regenerated outputs against expected workbook sheets and KPI rows. The checked-in output workbook is a reference baseline for review, not a guarantee of future run performance.
