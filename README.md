@@ -10,63 +10,91 @@ The included workbooks are sanitized or non-proprietary handoff data prepared fo
 
 - The included baseline output workbook completes all 93 aircraft and leaves 0 active aircraft at termination.
 - The checked-in output is a reference baseline from a successful run, not a universal performance guarantee.
-- The model remains a work in progress and capstone handoff artifact. Additional validation against internal production data and operating rules would be needed before operational use.
+- The repository includes a notebook workflow, a modular Python package layer, staged data inputs, simulated higher-rate inputs, and committed reference outputs.
+- The model remains a capstone handoff artifact. Additional validation against internal production data and operating rules would be needed before operational use.
 
 ## Repository Structure
 
 ```text
 BSC-FGI_Scheduler/
 |-- README.md
-|-- requirements.txt
-|-- notebooks/
-|   |-- BSC_FGI_Scheduler.ipynb
-|   |-- data_import.ipynb
-|   |-- move_time_estimation.ipynb
-|   `-- analyze_scheduler_output.ipynb
+|-- .gitignore
 |-- data/
 |   |-- raw/
-|   |   |-- FA_Status_FGI_Handoff.xlsx
-|   |   |-- FGI_Locations_wPriority.xlsx
-|   |   |-- FGI_Staffing_By_Shift.xlsx
-|   |   |-- Nodes.xlsx
-|   |   |-- Centerlines and Move Times Purdue.xlsx
-|   |   `-- paint_schedules.xlsx
+|   |-- simulated/
 |   `-- staged/
-|       |-- FGI_liveState.xlsx
-|       `-- move_times/
-|           |-- location_move_times.xlsx
-|           `-- move_time_estimation.xlsx
+|-- documentation/
+|-- jupyter notebooks/
 |-- output/
-|   |-- scheduler_trace_output.xlsx
-|   |-- monthly_btg_control_charts.png
-|   `-- nodemap.png
-`-- documentation/
-    |-- data_dictionary.md
-    `-- requirements.txt
+`-- pycode/
 ```
 
-`data/raw/` contains source input files used by the import and move-time notebooks.
+## Notebook Workflow
 
-`data/staged/` contains files prepared for direct algorithm input. In the included baseline, `data/staged/FGI_liveState.xlsx` provides AP, location, and labor inputs, and `data/staged/move_times/move_time_estimation.xlsx` provides the calibrated movement-time matrix used by the scheduler.
+The current notebook workflow is stored in:
 
-`output/` is intentionally visible and trackable. It contains reference outputs from successful runs so reviewers can inspect the expected workbook structure and baseline trace outputs.
+```text
+jupyter notebooks/
+```
 
-`documentation/` contains supporting handoff documentation, including the data dictionary.
+Current notebook files:
 
-## Input Files
+```text
+jupyter notebooks/BSC_FGI_Scheduler.ipynb
+jupyter notebooks/data_import.ipynb
+jupyter notebooks/move_time_estimation.ipynb
+jupyter notebooks/analyze_scheduler_output.ipynb
+```
 
-The current scheduler run uses the following files.
+The notebook workflow remains the clearest reviewer-facing execution path because it exposes setup assumptions, data loading, scheduler execution, and output review in a linear format.
 
-| Path | Purpose |
-|---|---|
-| `data/staged/FGI_liveState.xlsx` | Staged AP, location, and labor input workbook used directly by `notebooks/BSC_FGI_Scheduler.ipynb`. |
-| `data/staged/move_times/move_time_estimation.xlsx` | Calibrated origin-destination move-time matrix used directly by the scheduler. |
-| `data/raw/paint_schedules.xlsx` | Paint schedule input. The scheduler reads the `Historical` sheet and uses `BSC1` / `BSC2` bay assignments. |
-| `data/raw/FA_Status_FGI_Handoff.xlsx` | Raw AP, FA rollout, BTG, tank closure, and P3 milestone source workbook used by `notebooks/data_import.ipynb`. |
-| `data/raw/FGI_Locations_wPriority.xlsx` | Raw FGI location priority, online date, owner, tooling, centerline, obstruction, and notes source workbook. |
-| `data/raw/Nodes.xlsx` | Node and adjacency source used for route and move-time estimation. |
-| `data/raw/Centerlines and Move Times Purdue.xlsx` | Historical move-time and centerline reference data used by the move-time estimation notebook. |
-| `data/raw/FGI_Staffing_By_Shift.xlsx` | Staffing reference workbook. Current scheduler staffing assumptions should be checked in the notebooks before use. |
+## Data Layout
+
+Raw source workbooks are stored under:
+
+```text
+data/raw/
+```
+
+Current raw files:
+
+```text
+data/raw/Centerlines and Move Times Purdue.xlsx
+data/raw/FA_Status_FGI_Handoff.xlsx
+data/raw/FGI_Locations_wPriority.xlsx
+data/raw/FGI_Staffing_By_Shift.xlsx
+data/raw/Nodes.xlsx
+data/raw/paint_schedules.xlsx
+```
+
+Staged algorithm-ready files are stored under:
+
+```text
+data/staged/
+```
+
+Current staged files:
+
+```text
+data/staged/FGI_liveState.xlsx
+data/staged/move_times/location_move_times.xlsx
+data/staged/move_times/move_time_estimation.xlsx
+```
+
+Simulated higher-rate inputs are stored under:
+
+```text
+data/simulated/
+```
+
+Current simulated input files:
+
+```text
+data/simulated/FA_Status_FGI_Handoff_R10.xlsx
+data/simulated/FA_Status_FGI_Handoff_R12.xlsx
+data/simulated/FA_Status_FGI_Handoff_R14.xlsx
+data/simulated/FA_Status_FGI_Handoff_R20.xlsx
+```
 
 ## Output Files
 
@@ -76,7 +104,35 @@ The main scheduler output is:
 output/scheduler_trace_output.xlsx
 ```
 
-The current output workbook contains these sheets:
+The current baseline output set includes:
+
+```text
+output/scheduler_trace_output.xlsx
+output/monthly_btg_control_charts.png
+output/nodemap.png
+```
+
+Committed higher-rate simulation output folders are present for:
+
+```text
+output/rate simulation/R10/
+output/rate simulation/R12/
+output/rate simulation/R14/
+```
+
+Each committed rate simulation output folder contains:
+
+```text
+scheduler_outputs/FGI_liveState.xlsx
+scheduler_outputs/scheduler_trace_output.xlsx
+control_charts/monthly_btg_control_charts.png
+```
+
+The repository includes an `R20` simulated input workbook, but the submitted file set does not include a committed `output/rate simulation/R20/` output folder.
+
+## Main Trace Workbook
+
+The main scheduler trace workbook is expected to contain:
 
 | Sheet | Contents |
 |---|---|
@@ -93,71 +149,97 @@ The current output workbook contains these sheets:
 | `BTG declam` | Daily declam BTG completion by line number. |
 | `BTG test` | Daily test BTG completion by line number. |
 
-Additional reference outputs include:
+## Pycode Package Layer
 
-| Path | Purpose |
+The repository includes a modular Python package under:
+
+```text
+pycode/src/bsc_fgi_scheduler/
+```
+
+This package separates scheduler functionality into reusable modules for aircraft state, location state, scheduler state, trace recording, data import, Excel export, control chart generation, rate simulations, validation, constants, configuration, and paths.
+
+Important modules include:
+
+| Module | Purpose |
 |---|---|
-| `output/monthly_btg_control_charts.png` | Generated BTG control chart image from the analysis notebook. |
-| `output/nodemap.png` | Generated node map image from the move-time notebook. |
+| `ap.py` | Aircraft / line-number state, BTG state, task status, move request state, and AP-level helpers. |
+| `location.py` | Location state, ownership, priority, occupancy, online status, and placement feasibility. |
+| `fgi.py` | Main scheduler state manager for APs, locations, queues, movement, labor, paint, compass, and exit handling. |
+| `scheduler.py` | Higher-level scheduler execution function for package-based runs. |
+| `trace.py` | Daily trace capture for location occupancy, moves, labor allocation, and BTG completion. |
+| `export.py` | Excel workbook export and summary export support. |
+| `data_import.py` | Raw-to-staged data preparation and live-state workbook generation. |
+| `control_charts.py` | Monthly BTG control chart generation. |
+| `rate_simulations.py` | Higher-rate scenario detection, execution, export, logging, and summary creation. |
+| `validation.py` | Output validation helpers. |
+
+## Rate Simulation Run Conditions
+
+The higher-rate simulation workflow is implemented in:
+
+```text
+pycode/src/bsc_fgi_scheduler/rate_simulations.py
+```
+
+The submitted rate simulation runner uses these conditions:
+
+| Setting | Value |
+|---|---|
+| `STARTDATE` | `2026-04-01` |
+| `ENDDATE` | `2028-06-30` |
+| `FORECAST_UNTIL_COMPLETION` | `True` |
+| `FORECAST_CAP_DAYS` | `365` |
+| `CODECELL_OUTPUT` | `False` |
+| Export | `True` |
+
+Each detected `data/simulated/FA_Status_FGI_Handoff_R*.xlsx` workbook is treated as a separate scenario.
 
 ## How To Run
 
-1. Clone the repository and enter it.
+Clone the repository and enter it:
 
-   ```bash
-   git clone <repo-url>
-   cd BSC-FGI_Scheduler
-   ```
+```bash
+git clone <repo-url>
+cd BSC-FGI_Scheduler
+```
 
-2. Create and activate a local Python environment.
+Create and activate a local Python environment:
 
-   ```bash
-   python3.11 -m venv .venv
-   source .venv/bin/activate
-   ```
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+```
 
-3. Install notebook dependencies.
+Install notebook dependencies:
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r documentation/requirements.txt
+```
 
-4. Start Jupyter and open the scheduler notebook.
+Open the scheduler notebook:
 
-   ```bash
-   cd notebooks
-   jupyter notebook BSC_FGI_Scheduler.ipynb
-   ```
+```bash
+cd "jupyter notebooks"
+jupyter notebook BSC_FGI_Scheduler.ipynb
+```
 
-5. Run the scheduler notebook cells in order.
+Run the scheduler notebook cells in order.
 
-6. Confirm the main output workbook was generated or updated. From the notebook working directory this is:
+To run the modular Python package tests:
 
-   ```text
-   ../output/scheduler_trace_output.xlsx
-   ```
+```bash
+cd pycode
+pip install -e .
+pytest
+```
 
-   From the repository root this is:
+To run all detected rate simulations:
 
-   ```text
-   output/scheduler_trace_output.xlsx
-   ```
-
-The current scheduler notebook uses notebook-relative path assumptions and is normally run from the `notebooks/` directory. If paths fail, check the path setup cells before changing input files.
-
-If raw inputs or import assumptions change, rerun `notebooks/data_import.ipynb` from the repository root to rebuild `data/staged/FGI_liveState.xlsx`, then rerun the scheduler notebook. If the move-time matrix needs to be rebuilt, review and rerun `notebooks/move_time_estimation.ipynb`, then rerun the scheduler.
-
-## Requirements / Environment
-
-The current notebooks were inspected against Python 3.11. Required packages are listed in `requirements.txt`.
-
-Core dependencies:
-
-- `pandas`, `numpy`, and `openpyxl` for workbook input/output and data transformations
-- `matplotlib` for generated charts and node maps
-- `seaborn` because it is imported by the scheduler notebook
-- `scikit-learn` for move-time calibration in `notebooks/move_time_estimation.ipynb`
-- `jupyter` and `ipykernel` for notebook execution
+```bash
+cd pycode
+python -m bsc_fgi_scheduler.rate_simulations
+```
 
 ## Model Assumptions
 
@@ -178,6 +260,7 @@ Core dependencies:
 - Shake and tank-closure details are represented only to the extent reflected in the current staged inputs and notebook logic.
 - The current model supports analysis and handoff review. It is not an autonomous production scheduling system.
 - The notebooks are path-sensitive in places; review path setup cells when running from a new Jupyter environment.
+- R20 exists as a simulated input, but no committed R20 output folder is included in the submitted repository state.
 
 ## License / Ownership Note
 
@@ -187,4 +270,4 @@ This repository should not be read as a Boeing-owned or Boeing-licensed software
 
 ## Handoff Note
 
-Before relying on results, users should review input assumptions, inspect the staged inputs, rerun the notebooks locally, and compare the regenerated outputs against expected workbook sheets and KPI rows. The checked-in output workbook is a reference baseline for review, not a guarantee of future run performance.
+Before relying on results, users should review input assumptions, inspect the staged inputs, rerun the notebooks locally, and compare regenerated outputs against expected workbook sheets and KPI rows. The checked-in output workbooks are reference artifacts for review, not guarantees of future run performance.
